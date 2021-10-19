@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace LittlePaint
@@ -11,10 +12,10 @@ namespace LittlePaint
         {
             InitializeComponent();
         }
-        int LEFT = 1;/* двоичное 0001 */
-        int RIGHT = 2;/* двоичное 0010 */
-        int BOT = 4;/* двоичное 0100 */
-        int TOP = 8;/* двоичное 1000 */
+        int LEFT = 1;// двоичное 0001 
+        int RIGHT = 2;// двоичное 0010
+        int BOT = 4;// двоичное 0100
+        int TOP = 8;// двоичное 1000
 
         Rectangle rect;// Черный прямоугольник
 
@@ -291,6 +292,195 @@ namespace LittlePaint
             }
         } // Прямая
 
+        private void NonIntegerAlgoritmLine(float startX, float startY, float finishX, float finishY)// Прямая
+        {
+            // т.к. у нас начальная точка может не быть нулем, 
+            // параллельным переносом сдвинуть наш будущий отрезок в начало координат
+            int c = 1000;// масштабный коэффициент
+            Point currentPoint = new Point(0, 0);// координаты текущей точки(тут имеется ввиду, что значение текущей точки сдвинуто
+                                                 // в начало координат)
+
+            float delta_h;
+            float delta_v;
+
+            int kvadr=0;
+
+            float a = finishX - startX;// координаты конца отрезка(сдвинутые к началу координат)
+            float b = finishY - startY;
+            
+            if(b>0)
+            {
+                if (a > 0)
+                    kvadr = 4;
+                else
+                    kvadr = 3;
+            }
+            else
+            {
+                if (a > 0)
+                    kvadr = 1;
+                else
+                    kvadr = 2;
+            }
+           
+            double h = 0;//0
+            double v = 0;//0
+
+            if (finishX - startX == 0)
+            {
+                while(Math.Abs(currentPoint.Y)<= Math.Abs(finishY - startY))
+                {
+                    switch (kvadr)
+                    {
+                        case 1:
+                            {
+                                Point point = new Point(currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                        case 2:
+                            {
+                                Point point = new Point(-currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                        case 3:
+                            {
+                                Point point = new Point(-currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                        case 4:
+                            {
+                                Point point = new Point(currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                    }
+                    currentPoint.Y--;
+                }
+                return;
+            }// параллельно ОУ
+
+            if (finishY - startY == 0)
+            {
+                while (currentPoint.X <= Math.Abs(finishX - startX))
+                {
+                    switch (kvadr)
+                    {
+                        case 1:
+                            {
+                                Point point = new Point(currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                        case 2:
+                            {
+                                Point point = new Point(-currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                        case 3:
+                            {
+                                Point point = new Point(-currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                        case 4:
+                            {
+                                Point point = new Point(currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY));
+                                Plot(point);
+                            }
+                            break;
+                    }
+                    currentPoint.X++;
+                }
+                return;
+            }// параллельно ОХ
+
+            delta_h = c / (Math.Abs(finishX - startX));
+            delta_v = c / (Math.Abs(finishY - startY));
+
+            while ((h < c) && (v < c))
+            {
+                switch (kvadr)
+                {
+                    case 1:
+                        {
+                            Point point = new Point(currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY));
+                            Plot(point);
+                        }
+                        break;
+                    case 2:
+                        {
+                            Point point = new Point(-currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY));
+                            Plot(point);
+                        }
+                        break;
+                    case 3:
+                        {
+                            Point point = new Point(-currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY));
+                            Plot(point);
+                        }
+                        break;
+                    case 4:
+                        {
+                            Point point = new Point(currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY));
+                            Plot(point);
+                        }
+                        break;
+                }
+
+                if (h < v)
+                {
+                    // Сдвиг по горизонтали
+                    currentPoint.X++;
+                    h += delta_h;
+                }
+                else if (h > v)
+                {
+                    // Сдвиг по вертикали
+                    currentPoint.Y--;
+                    v += delta_v;
+                }
+                else
+                {
+                    h = v;//Вырожденный случай
+                    switch (kvadr)
+                    {
+                        case 1:
+                            {
+                                Point point = new Point(currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY)+1);
+                                Plot(point);
+                            }
+                            break;
+                        case 2:
+                            {
+                                Point point = new Point(-currentPoint.X + (int)Math.Round(startX), currentPoint.Y + (int)Math.Round(startY) + 1);
+                                Plot(point);
+                            }
+                            break;
+                        case 3:
+                            {
+                                Point point = new Point(-currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY) + 1);
+                                Plot(point);
+                            }
+                            break;
+                        case 4:
+                            {
+                                Point point = new Point(currentPoint.X + (int)Math.Round(startX), -currentPoint.Y + (int)Math.Round(startY) + 1);
+                                Plot(point);
+                            }
+                            break;
+                    }
+                    currentPoint.X++;
+                    currentPoint.Y--;
+                    h += delta_h;
+                    v += delta_v;
+                }
+            }
+        }
+
         void BrezenkhemAlgoritmCircle(Point mid, int radius)
         {
             int x = 0;
@@ -368,7 +558,7 @@ namespace LittlePaint
             return (p.X < r.Left ? LEFT : 0) + (p.X > r.Right ? RIGHT : 0) + (p.Y > (r.Bottom) ? BOT : 0) + (p.Y < (r.Top) ? TOP : 0);
         }
 
-        int cohen_sutherland(Rectangle r, Point a, Point b)
+        int Cohen_sutherland(Rectangle r, Point a, Point b)
         {
             int code_a, code_b, code; /* код концов отрезка */
             Point c; /* одна из точек */
@@ -432,53 +622,6 @@ namespace LittlePaint
             return 0;
         }// Отсечение отрезка
 
-        private void Form1_MouseDown(object sender, MouseEventArgs e)
-                {
-                    startPoint.X = e.X;
-                    startPoint.Y = e.Y;
-                    //Cursor.Clip = this.RectangleToScreen(this.ClientRectangle);
-                }
-
-        private void Form1_MouseUp(object sender, MouseEventArgs e)
-        {
-            Cursor.Clip = new Rectangle();
-            if (this.lineButton.Checked)
-            {
-                //DigitalDifferencialAnalizator(startPoint.X, startPoint.Y, e.X, e.Y);
-                BrezenkhemAlgoritmLine(startPoint.X, startPoint.Y, e.X, e.Y);
-            }
-            if (this.circleButton.Checked)
-            {
-                BrezenkhemAlgoritmCircle(new Point(startPoint.X, startPoint.Y), (int)Math.Sqrt(Math.Pow(e.X - startPoint.X, 2) + Math.Pow(e.Y - startPoint.Y, 2)));
-            }
-            if (this.bezierButton.Checked)
-            {
-                if (pointList.Count == 10)// Максимум 10 точек
-                    return;
-                pointList.Add(new PointF(e.X, e.Y));
-                DecasteldjoAlgoritmBusier();
-            }
-            if (this.cutterButton.Checked)
-            {
-                // Алгоритм Коэна-Сазерленда
-                cohen_sutherland(rect, new Point(startPoint.X, startPoint.Y), new Point(e.X, e.Y));
-
-                // Алгоритм Кируса-Бека
-                //Polygon pol = new Polygon();
-                //pol.Add(new PointF(rect.Right, rect.Top));
-                //pol.Add(new PointF(rect.Right, rect.Bottom));
-                //pol.Add(new PointF(rect.Left, rect.Bottom));
-                //pol.Add(new PointF(rect.Left, rect.Top));
-                //Segment seg = new Segment(new PointF(startPoint.X, startPoint.Y), new PointF(e.X, e.Y));
-                //if (pol.CyrusBeckClip(ref seg))
-                //    BrezenkhemAlgoritmLine((int)seg.A.X, (int)seg.A.Y, (int)seg.B.X, (int)seg.B.Y);
-
-                // Алгоритм средней точки
-                //MidpointAlgorithm(startPoint, new Point(e.X,e.Y));
-            }
-
-        }
-
         void MidpointAlgorithm(Point a, Point b)
         {
             if (Math.Sqrt((b.X - a.X) * (b.X - a.X) + (b.Y - a.Y) * (b.Y - a.Y)) < 2)
@@ -489,41 +632,161 @@ namespace LittlePaint
                 return;
             if ((code_a | code_b) == 0)//AB лежит внутри отсекающего прямоугольника
             {
-                BrezenkhemAlgoritmLine(a.X,a.Y,b.X,b.Y);
+                BrezenkhemAlgoritmLine(a.X, a.Y, b.X, b.Y);
                 return;
             }
-            MidpointAlgorithm(a, new Point((a.X+b.X)/2,(a.Y+b.Y)/2));
+            MidpointAlgorithm(a, new Point((a.X + b.X) / 2, (a.Y + b.Y) / 2));
             MidpointAlgorithm(new Point((a.X + b.X) / 2, (a.Y + b.Y) / 2), b);
         }// Алгоритм средней точки отсечения отрезка
 
-        private void LineButton_Click(object sender, EventArgs e)
+        private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (this.lineButton.Checked)
+            startPoint.X = e.X;
+            startPoint.Y = e.Y;
+            //Cursor.Clip = this.RectangleToScreen(this.ClientRectangle);
+        }
+
+        private void Form1_MouseUp(object sender, MouseEventArgs e)
+        {
+            Cursor.Clip = new Rectangle();
+            // Линии
+            if (this.MenuItemDDA.Checked)
+                DigitalDifferencialAnalizator(startPoint.X, startPoint.Y, e.X, e.Y);
+            if (this.MenuItemBrezLine.Checked)
+                BrezenkhemAlgoritmLine(startPoint.X, startPoint.Y, e.X, e.Y);
+
+            // Круг
+            if (this.circleButton.Checked)
+                BrezenkhemAlgoritmCircle(new Point(startPoint.X, startPoint.Y), (int)Math.Sqrt(Math.Pow(e.X - startPoint.X, 2) + Math.Pow(e.Y - startPoint.Y, 2)));
+
+            // Бизье
+            if (this.bezierButton.Checked)
             {
-                this.circleButton.Checked = false;
-                this.bezierButton.Checked = false;
-                this.cutterButton.Checked = false;
+                if (pointList.Count == 10)// Максимум 10 точек
+                    return;
+                pointList.Add(new PointF(e.X, e.Y));
+                DecasteldjoAlgoritmBusier();
             }
+
+            if (this.Cutter1.Checked)
+                // Алгоритм Коэна-Сазерленда
+                Cohen_sutherland(rect, new Point(startPoint.X, startPoint.Y), new Point(e.X, e.Y));
+
+            if (this.Cutter2.Checked)
+            {
+                // Алгоритм Кируса-Бека
+                Polygon pol = new Polygon();
+                pol.Add(new PointF(rect.Right, rect.Top));
+                pol.Add(new PointF(rect.Right, rect.Bottom));
+                pol.Add(new PointF(rect.Left, rect.Bottom));
+                pol.Add(new PointF(rect.Left, rect.Top));
+                Segment seg = new Segment(new PointF(startPoint.X, startPoint.Y), new PointF(e.X, e.Y));
+                if (pol.CyrusBeckClip(ref seg))
+                    BrezenkhemAlgoritmLine((int)seg.A.X, (int)seg.A.Y, (int)seg.B.X, (int)seg.B.Y);
+            }
+
+            if (this.Cutter3.Checked)
+                // Алгоритм средней точки
+                MidpointAlgorithm(startPoint, new Point(e.X, e.Y));
+
         }
 
         private void CircleButton_Click(object sender, EventArgs e)
         {
-            if (this.circleButton.Checked)
-            {
-                this.lineButton.Checked = false;
-                this.bezierButton.Checked = false;
-                this.cutterButton.Checked = false;
-            }
+            this.MenuItemDDA.Checked = false;
+            this.circleButton.Checked = true;
+            this.bezierButton.Checked = false;
+            this.MenuItemBrezLine.Checked = false;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = false;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
         }
 
         private void BezierButton_Click(object sender, EventArgs e)
         {
-            if (this.bezierButton.Checked)
-            {
-                this.lineButton.Checked = false;
-                this.circleButton.Checked = false;
-                this.cutterButton.Checked = false;
-            }
+            this.MenuItemDDA.Checked = false;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = true;
+            this.MenuItemBrezLine.Checked = false;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = false;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
+        }
+
+        private void MenuItemDDA_Click(object sender, EventArgs e)
+        {
+            this.MenuItemDDA.Checked = true;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = false;
+            this.MenuItemBrezLine.Checked = false;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = false;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
+        }
+
+        private void MenuItemBrezLine_Click(object sender, EventArgs e)
+        {
+            this.MenuItemDDA.Checked = false;
+            this.MenuItemBrezLine.Checked = true;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = false;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = false;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
+        }
+
+        private void Cutter1_Click(object sender, EventArgs e)
+        {
+            this.MenuItemDDA.Checked = false;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = false;
+            this.MenuItemBrezLine.Checked = false;
+            this.Cutter1.Checked = true;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = false;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
+        }
+
+        private void Cutter2_Click(object sender, EventArgs e)
+        {
+            this.MenuItemDDA.Checked = false;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = false;
+            this.MenuItemBrezLine.Checked = false;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = true;
+            this.Cutter3.Checked = false;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
+        }
+
+        private void Cutter3_Click(object sender, EventArgs e)
+        {
+            this.MenuItemDDA.Checked = false;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = false;
+            this.MenuItemBrezLine.Checked = false;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = true;
+            this.IrracionalEndsLine.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = false;
         }
 
         private void ColorButton_Click(object sender, EventArgs e)
@@ -541,14 +804,24 @@ namespace LittlePaint
                 br = new SolidBrush(MyDialog.Color);
         }// Диалоговое окно выбора цвета
 
-        private void CutterButton_Click(object sender, EventArgs e)
+        private void DrawlineBtn_Click(object sender, EventArgs e)
         {
-            if (this.cutterButton.Checked)
-            {
-                this.lineButton.Checked = false;
-                this.circleButton.Checked = false;
-                this.bezierButton.Checked = false;
-            }
+            NonIntegerAlgoritmLine(float.Parse(Ax.Text, CultureInfo.InvariantCulture.NumberFormat), float.Parse(Ay.Text, CultureInfo.InvariantCulture.NumberFormat),
+                float.Parse(Bx.Text, CultureInfo.InvariantCulture.NumberFormat), float.Parse(By.Text, CultureInfo.InvariantCulture.NumberFormat));
+        }
+
+        private void IrracionalEndsLine_Click(object sender, EventArgs e)
+        {
+            this.MenuItemDDA.Checked = false;
+            this.circleButton.Checked = false;
+            this.bezierButton.Checked = false;
+            this.MenuItemBrezLine.Checked = false;
+            this.IrracionalEndsLine.Checked = true;
+            this.Cutter1.Checked = false;
+            this.Cutter2.Checked = false;
+            this.Cutter3.Checked = false;
+
+            this.groupBoxIrrEndsLine.Visible = true;
         }
     }
 
